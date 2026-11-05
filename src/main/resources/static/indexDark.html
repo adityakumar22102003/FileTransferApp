@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#101713" />
+  <title>FTP File Portal</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --page: #101713;
+      --panel: #18221c;
+      --panel-soft: #202c24;
+      --line: #34443a;
+      --text: #f0f5ef;
+      --muted: #9aab9e;
+      --accent: #b8f36b;
+      --accent-ink: #17210f;
+      --danger: #ff9c91;
+      --success: #b8f36b;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 36px 20px;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(ellipse at 12% 8%, rgba(184,243,107,.11), transparent 32%),
+        radial-gradient(ellipse at 90% 92%, rgba(92,145,105,.13), transparent 35%),
+        var(--page);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, input { font: inherit; }
+    .shell { width: min(100%, 940px); }
+    .topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 0 4px 18px;
+    }
+    .wordmark {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 13px;
+      font-weight: 750;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      background: var(--accent);
+      color: var(--accent-ink);
+    }
+    .connection {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .connection::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(184,243,107,.55);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: .82fr 1.18fr;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 25px;
+      background: var(--panel);
+      box-shadow: 0 28px 90px rgba(0,0,0,.32);
+    }
+    .intro {
+      position: relative;
+      min-height: 610px;
+      padding: 46px 38px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      background: var(--accent);
+      color: var(--accent-ink);
+    }
+    .intro::after {
+      content: "↗";
+      position: absolute;
+      right: -20px;
+      bottom: 60px;
+      color: rgba(23,33,15,.08);
+      font-size: 260px;
+      font-weight: 800;
+      line-height: .8;
+      pointer-events: none;
+    }
+    .eyebrow {
+      margin: 0 0 18px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .17em;
+      text-transform: uppercase;
+      opacity: .65;
+    }
+    .intro h1 {
+      max-width: 330px;
+      margin: 0;
+      font-size: clamp(36px, 5vw, 54px);
+      line-height: .99;
+      letter-spacing: -.055em;
+    }
+    .intro-copy {
+      max-width: 290px;
+      margin: 20px 0 0;
+      color: rgba(23,33,15,.72);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .steps {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 16px;
+      margin-top: 48px;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .step-number {
+      width: 27px;
+      height: 27px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(23,33,15,.28);
+      border-radius: 50%;
+      font-size: 11px;
+    }
+    .intro-foot {
+      position: relative;
+      z-index: 1;
+      margin-top: 42px;
+      font-size: 11px;
+      font-weight: 650;
+      opacity: .65;
+    }
+
+    .main {
+      min-width: 0;
+      padding: 42px;
+    }
+    .section-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+    .section-head h2 {
+      margin: 0 0 7px;
+      font-size: 21px;
+      letter-spacing: -.035em;
+    }
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .multi-tag {
+      flex: 0 0 auto;
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .dropzone {
+      min-height: 225px;
+      padding: 28px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px dashed #617465;
+      border-radius: 17px;
+      background: #1c2920;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s, transform .2s;
+    }
+    .dropzone:hover, .dropzone.dragover {
+      border-color: var(--accent);
+      background: #243328;
+    }
+    .dropzone.dragover { transform: scale(1.01); }
+    .upload-symbol {
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 16px;
+      border-radius: 16px;
+      background: rgba(184,243,107,.12);
+      color: var(--accent);
+    }
+    .upload-symbol svg { width: 25px; height: 25px; }
+    .dropzone strong { font-size: 14px; }
+    .dropzone .hint {
+      margin: 8px 0 16px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .browse {
+      padding: 9px 14px;
+      border: 1px solid #526457;
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    #fileInput { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+    .files-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 27px 0 11px;
+    }
+    .files-head h3 {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 750;
+    }
+    .file-count {
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .file-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 180px;
+      overflow: auto;
+      padding-right: 3px;
+    }
+    .empty-state {
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      color: #829487;
+      font-size: 11px;
+      text-align: center;
+    }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--panel-soft);
+      animation: appear .2s ease-out;
+    }
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .file-icon {
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      background: rgba(184,243,107,.1);
+      color: var(--accent);
+    }
+    .file-icon svg { width: 17px; height: 17px; }
+    .file-info { flex: 1; min-width: 0; }
+    .file-name {
+      display: block;
+      overflow: hidden;
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 650;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-size {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+    .file-status { color: var(--success); font-size: 15px; }
+
+    .submit-btn {
+      width: 100%;
+      min-height: 47px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      margin-top: 23px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .2s, filter .2s;
+    }
+    .submit-btn:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-1px); }
+    .submit-btn:disabled { cursor: not-allowed; opacity: .55; }
+    .submit-btn svg { width: 16px; height: 16px; }
+    .security {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+    .security svg { width: 13px; height: 13px; }
+    .status-message {
+      display: none;
+      margin-top: 13px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+    .status-message.visible { display: block; }
+    .status-message.success { border-color: rgba(184,243,107,.4); color: var(--success); }
+    .status-message.error { border-color: rgba(255,156,145,.4); color: var(--danger); }
+
+    @media (max-width: 720px) {
+      body { padding: 20px 13px; }
+      .workspace { grid-template-columns: 1fr; }
+      .intro { min-height: auto; padding: 28px 25px; }
+      .intro h1 { max-width: 450px; font-size: 39px; }
+      .intro-copy { margin-top: 12px; }
+      .steps { grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 25px; }
+      .step { align-items: flex-start; gap: 7px; font-size: 10px; }
+      .step-number { width: 23px; height: 23px; flex: 0 0 auto; }
+      .intro-foot { margin-top: 25px; }
+      .main { padding: 27px 22px; }
+    }
+    @media (max-width: 390px) {
+      .connection { font-size: 10px; }
+      .main { padding: 24px 16px; }
+      .section-head { flex-direction: column; }
+      .steps { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topline">
+      <div class="wordmark">
+        <span class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 7h6l2 2h8v10H4z"/><path d="M4 7V5h7l2 2"/>
+          </svg>
+        </span>
+        FTP File Portal
+      </div>
+      <span class="connection">Transfer workspace</span>
+    </header>
+
+    <section class="workspace" aria-label="File upload workspace">
+      <aside class="intro">
+        <div>
+          <p class="eyebrow">Simple. Direct. Secure.</p>
+          <h1>Move files without the clutter.</h1>
+          <p class="intro-copy">Choose the files you want to send. Review your selection, then upload them to your transfer destination.</p>
+          <div class="steps" aria-label="Upload steps">
+            <div class="step"><span class="step-number">01</span><span>Select files</span></div>
+            <div class="step"><span class="step-number">02</span><span>Review selection</span></div>
+            <div class="step"><span class="step-number">03</span><span>Start transfer</span></div>
+          </div>
+        </div>
+        <div class="intro-foot">YOUR FILES, ONE SIMPLE WORKFLOW</div>
+      </aside>
+
+      <section class="main">
+        <div class="section-head">
+          <div>
+            <h2>Upload your files</h2>
+            <p>Add one or more files from your device.</p>
+          </div>
+          <span class="multi-tag">Multiple files</span>
+        </div>
+
+        <form id="uploadForm">
+          <label class="dropzone" id="uploadArea" for="fileInput">
+            <span class="upload-symbol" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 16v4h14v-4"/>
+              </svg>
+            </span>
+            <strong>Drop your files here</strong>
+            <span class="hint">or browse files on your computer</span>
+            <span class="browse">Choose files</span>
+            <input type="file" id="fileInput" name="files" multiple />
+          </label>
+
+          <div class="files-head">
+            <h3>Selected files</h3>
+            <span class="file-count" id="fileCount">0 files</span>
+          </div>
+          <div class="file-list" id="fileList" aria-live="polite">
+            <div class="empty-state">Your selected files will appear here.</div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="submitButton">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 20h14"/>
+            </svg>
+            <span>Upload files</span>
+          </button>
+          <div class="status-message" id="statusMessage" role="status" aria-live="polite"></div>
+          <div class="security">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+            </svg>
+            Secure file transfer
+          </div>
+        </form>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const fileInput = document.getElementById("fileInput");
+    const uploadArea = document.getElementById("uploadArea");
+    const fileList = document.getElementById("fileList");
+    const fileCount = document.getElementById("fileCount");
+    const uploadForm = document.getElementById("uploadForm");
+    const submitButton = document.getElementById("submitButton");
+    const statusMessage = document.getElementById("statusMessage");
+
+    fileInput.addEventListener("change", function () {
+      displayFiles(this.files);
+      clearStatus();
+    });
+
+    function displayFiles(files) {
+      fileList.replaceChildren();
+      const totalFiles = files.length;
+      fileCount.textContent = `${totalFiles} ${totalFiles === 1 ? "file" : "files"}`;
+
+      if (totalFiles === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent = "Your selected files will appear here.";
+        fileList.appendChild(empty);
+        return;
+      }
+
+      Array.from(files).forEach((file) => {
+        const item = document.createElement("div");
+        item.className = "file-item";
+
+        const icon = document.createElement("span");
+        icon.className = "file-icon";
+        icon.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <path d="M14 2v6h6"/>
+          </svg>`;
+
+        const info = document.createElement("div");
+        info.className = "file-info";
+
+        const name = document.createElement("span");
+        name.className = "file-name";
+        name.textContent = file.name;
+
+        const size = document.createElement("span");
+        size.className = "file-size";
+        size.textContent = formatFileSize(file.size);
+
+        const status = document.createElement("span");
+        status.className = "file-status";
+        status.setAttribute("aria-label", "Selected");
+        status.textContent = "✓";
+
+        info.append(name, size);
+        item.append(icon, info, status);
+        fileList.appendChild(item);
+      });
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + " B";
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+      if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+      return (bytes / (1024 * 1024 * 1024)).toFixed(1) + " GB";
+    }
+
+    function showStatus(message, type) {
+      statusMessage.textContent = message;
+      statusMessage.className = `status-message visible ${type}`;
+    }
+
+    function clearStatus() {
+      statusMessage.textContent = "";
+      statusMessage.className = "status-message";
+    }
+
+    uploadArea.addEventListener("dragover", function (event) {
+      event.preventDefault();
+      uploadArea.classList.add("dragover");
+    });
+
+    uploadArea.addEventListener("dragleave", function (event) {
+      if (!uploadArea.contains(event.relatedTarget)) {
+        uploadArea.classList.remove("dragover");
+      }
+    });
+
+    uploadArea.addEventListener("drop", function (event) {
+      event.preventDefault();
+      uploadArea.classList.remove("dragover");
+
+      const files = event.dataTransfer.files;
+      if (!files || files.length === 0) return;
+
+      fileInput.files = files;
+      displayFiles(fileInput.files);
+      clearStatus();
+    });
+
+    uploadForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      if (fileInput.files.length === 0) {
+        showStatus("Please select at least one file before uploading.", "error");
+        return;
+      }
+
+      const formData = new FormData();
+      Array.from(fileInput.files).forEach((file) => {
+        formData.append("file", file);
+      });
+
+      submitButton.disabled = true;
+      submitButton.querySelector("span").textContent = "Uploading…";
+      clearStatus();
+
+      try {
+        // Keep the existing backend contract unchanged.
+        const response = await fetch("/api/files/upload", {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await response.text();
+
+        if (!response.ok) {
+          throw new Error(result || `Upload failed with status ${response.status}`);
+        }
+
+        showStatus("Files uploaded successfully.", "success");
+      } catch (error) {
+        console.error("Upload failed:", error);
+        showStatus(error.message || "Upload failed. Please try again.", "error");
+      } finally {
+        fileList.replaceChildren();
+        fileCount.textContent = "0 files";
+        fileInput.value = "";
+        displayFiles(fileInput.files);
+        submitButton.disabled = false;
+        submitButton.querySelector("span").textContent = "Upload files";
+      }
+    });
+  </script>
+</body>
+</html>
