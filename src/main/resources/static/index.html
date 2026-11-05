@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+    <title>FTP File Portal</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #eff6ff;
+
+            --dark: #0f172a;
+            --text: #334155;
+            --muted: #64748b;
+
+            --border: #e2e8f0;
+            --background: #f8fafc;
+            --white: #ffffff;
+
+            --success: #16a34a;
+        }
+
+        body {
+            min-height: 70vh;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            padding: 30px;
+
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+            Roboto, Arial, sans-serif;
+
+            background: radial-gradient(
+                    circle at 10% 20%,
+                    rgba(37, 99, 235, 0.15),
+                    transparent 30%
+            ),
+            radial-gradient(
+                    circle at 90% 80%,
+                    rgba(59, 130, 246, 0.12),
+                    transparent 30%
+            ),
+            #0b1220;
+
+            color: var(--text);
+        }
+
+        /* =========================
+         MAIN CARD
+      ========================= */
+
+        .container {
+            width: 100%;
+            max-width: 520px;
+        }
+
+        .upload-card {
+            background: rgba(255, 255, 255, 0.98);
+
+            border: 1px solid rgba(255, 255, 255, 0.4);
+
+            border-radius: 24px;
+
+            padding: 42px;
+
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25),
+            0 10px 30px rgba(0, 0, 0, 0.08);
+
+            animation: cardEntry 0.6s ease-out;
+        }
+
+        @keyframes cardEntry {
+            from {
+                opacity: 0;
+                transform: translateY(25px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* =========================
+         HEADER
+      ========================= */
+
+        .heading {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .brand-icon {
+            width: 52px;
+            height: 52px;
+
+            margin: 0 auto 16px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 14px;
+
+            background: var(--primary-light);
+
+            color: var(--primary);
+        }
+
+        .brand-icon svg {
+            width: 27px;
+            height: 27px;
+        }
+
+        .heading h1 {
+            font-size: 30px;
+            font-weight: 700;
+
+            letter-spacing: -0.5px;
+
+            color: var(--dark);
+
+            margin-bottom: 8px;
+        }
+
+        .heading p {
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        /* =========================
+         UPLOAD AREA
+      ========================= */
+
+        .upload-area {
+            position: relative;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            min-height: 270px;
+
+            padding: 35px;
+
+            border: 2px dashed #cbd5e1;
+
+            border-radius: 18px;
+
+            background: #f8fafc;
+
+            cursor: pointer;
+
+            transition: border-color 0.25s ease, background 0.25s ease,
+            transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+
+            background: #f8fbff;
+
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.08);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary);
+
+            background: #eff6ff;
+
+            transform: scale(1.01);
+
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08),
+            0 10px 30px rgba(37, 99, 235, 0.1);
+        }
+
+        /* =========================
+         UPLOAD ICON
+      ========================= */
+
+        .upload-icon {
+            width: 72px;
+            height: 72px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            margin-bottom: 20px;
+
+            border-radius: 18px;
+
+            background: #eaf2ff;
+
+            color: var(--primary);
+
+            transition: transform 0.3s ease;
+        }
+
+        .upload-area:hover .upload-icon {
+            transform: translateY(-4px);
+        }
+
+        .upload-icon svg {
+            width: 36px;
+            height: 36px;
+        }
+
+        .upload-area h2 {
+            color: var(--dark);
+
+            font-size: 19px;
+            font-weight: 600;
+
+            margin-bottom: 8px;
+        }
+
+        .upload-area p {
+            color: var(--muted);
+
+            font-size: 14px;
+
+            margin-bottom: 22px;
+        }
+
+        /* =========================
+         CHOOSE BUTTON
+      ========================= */
+
+        #fileInput {
+            display: none;
+        }
+
+        .choose-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 10px 18px;
+
+            border-radius: 9px;
+
+            background: white;
+
+            border: 1px solid #cbd5e1;
+
+            color: #1e293b;
+
+            font-size: 14px;
+            font-weight: 600;
+
+            transition: all 0.2s ease;
+
+            cursor: pointer;
+        }
+
+        .choose-btn:hover {
+            border-color: var(--primary);
+
+            color: var(--primary);
+
+            background: #f8fbff;
+        }
+
+        /* =========================
+         FILE HEADER
+      ========================= */
+
+        .file-section {
+            margin-top: 28px;
+        }
+
+        .file-header {
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            margin-bottom: 12px;
+        }
+
+        .file-header-title {
+            font-size: 14px;
+
+            font-weight: 600;
+
+            color: var(--dark);
+        }
+
+        .file-count {
+            display: none;
+
+            padding: 4px 9px;
+
+            border-radius: 20px;
+
+            background: #eff6ff;
+
+            color: var(--primary);
+
+            font-size: 12px;
+
+            font-weight: 600;
+        }
+
+        /* =========================
+         FILE LIST
+      ========================= */
+
+        .file-list {
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 8px;
+
+            max-height: 190px;
+
+            overflow-y: auto;
+
+            padding-right: 3px;
+        }
+
+        .file-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .file-list::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+
+            border-radius: 10px;
+        }
+
+        .file-item {
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+            padding: 12px 14px;
+
+            background: #f8fafc;
+
+            border: 1px solid #e2e8f0;
+
+            border-radius: 10px;
+
+            animation: fileAppear 0.25s ease;
+        }
+
+        @keyframes fileAppear {
+            from {
+                opacity: 0;
+
+                transform: translateY(-5px);
+            }
+
+            to {
+                opacity: 1;
+
+                transform: translateY(0);
+            }
+        }
+
+        .file-icon {
+            width: 36px;
+            height: 36px;
+
+            flex-shrink: 0;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 8px;
+
+            background: #eaf2ff;
+
+            color: var(--primary);
+        }
+
+        .file-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .file-info {
+            min-width: 0;
+
+            flex: 1;
+        }
+
+        .file-name {
+            display: block;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+
+            white-space: nowrap;
+
+            color: #334155;
+
+            font-size: 13px;
+
+            font-weight: 500;
+
+            margin-bottom: 3px;
+        }
+
+        .file-size {
+            color: #94a3b8;
+
+            font-size: 11px;
+        }
+
+        .file-status {
+            color: var(--success);
+
+            display: flex;
+            align-items: center;
+        }
+
+        .file-status svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        /* =========================
+         UPLOAD BUTTON
+      ========================= */
+
+        .submit-btn {
+            width: 100%;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            gap: 8px;
+
+            margin-top: 26px;
+
+            padding: 14px 20px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            background: var(--primary);
+
+            color: white;
+
+            font-size: 15px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.2);
+
+            transition: background 0.2s ease, transform 0.2s ease,
+            box-shadow 0.2s ease;
+        }
+
+        .submit-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .submit-btn:hover {
+            background: var(--primary-dark);
+
+            transform: translateY(-1px);
+
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.28);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* =========================
+         SECURITY NOTE
+      ========================= */
+
+        .security-note {
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            gap: 6px;
+
+            margin-top: 18px;
+
+            color: #94a3b8;
+
+            font-size: 11px;
+        }
+
+        .security-note svg {
+            width: 13px;
+            height: 13px;
+        }
+
+        /* =========================
+         MOBILE
+      ========================= */
+
+        @media (max-width: 600px) {
+            body {
+                padding: 18px;
+            }
+
+            .upload-card {
+                padding: 28px 20px;
+
+                border-radius: 20px;
+            }
+
+            .heading {
+                margin-bottom: 25px;
+            }
+
+            .heading h1 {
+                font-size: 25px;
+            }
+
+            .upload-area {
+                min-height: 240px;
+
+                padding: 25px 15px;
+            }
+
+            .upload-icon {
+                width: 62px;
+                height: 62px;
+            }
+
+            .upload-icon svg {
+                width: 31px;
+                height: 31px;
+            }
+
+            .upload-area h2 {
+                font-size: 17px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <div class="upload-card">
+        <!-- HEADER -->
+        <div class="heading">
+            <div class="brand-icon">
+                <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                >
+                    <path d="M4 7h5l2 2h9v10H4z"></path>
+                    <path d="M4 7V5h6l2 2"></path>
+                </svg>
+            </div>
+
+            <h1>FTP File Portal</h1>
+
+            <p>Securely upload and transfer your files</p>
+        </div>
+
+        <form id="uploadForm">
+            <!-- UPLOAD AREA -->
+            <label class="upload-area" id="uploadArea" for="fileInput">
+                <div class="upload-icon">
+                    <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                    >
+                        <path d="M12 16V4"></path>
+
+                        <path d="M7 9l5-5 5 5"></path>
+
+                        <path d="M5 20h14"></path>
+
+                        <path d="M5 16v4"></path>
+
+                        <path d="M19 16v4"></path>
+                    </svg>
+                </div>
+
+                <h2>Drag & drop your files here</h2>
+
+                <p>or select multiple files from your computer</p>
+
+                <input type="file" id="fileInput" name="files" multiple/>
+
+                <span class="choose-btn"> Choose Files </span>
+            </label>
+
+            <!-- FILE SECTION -->
+            <div class="file-section">
+                <div class="file-header">
+                    <span class="file-header-title"> Selected Files </span>
+
+                    <span class="file-count" id="fileCount"> 0 files </span>
+                </div>
+
+                <div class="file-list" id="fileList"></div>
+            </div>
+
+            <!-- UPLOAD BUTTON -->
+            <button type="submit" class="submit-btn">
+                <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                >
+                    <path d="M12 16V4"></path>
+
+                    <path d="M7 9l5-5 5 5"></path>
+
+                    <path d="M5 20h14"></path>
+                </svg>
+
+                Upload Files
+            </button>
+
+            <!-- SECURITY -->
+            <div class="security-note">
+                <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                >
+                    <rect x="4" y="10" width="16" height="10" rx="2"></rect>
+
+                    <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+                </svg>
+
+                Secure file transfer
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const fileInput = document.getElementById("fileInput");
+
+    const uploadArea = document.getElementById("uploadArea");
+
+    const fileList = document.getElementById("fileList");
+
+    const fileCount = document.getElementById("fileCount");
+
+    const uploadForm = document.getElementById("uploadForm");
+
+    /* =========================
+     FILE SELECTION
+  ========================= */
+
+    fileInput.addEventListener("change", function () {
+        displayFiles(this.files);
+    });
+
+    /* =========================
+     DISPLAY FILES
+  ========================= */
+
+    function displayFiles(files) {
+        fileList.innerHTML = "";
+
+        const totalFiles = files.length;
+
+        if (totalFiles === 0) {
+            fileCount.style.display = "none";
+
+            return;
+        }
+
+        fileCount.textContent = `${totalFiles} ${
+            totalFiles === 1 ? "file" : "files"
+        }`;
+
+        fileCount.style.display = "inline-block";
+
+        Array.from(files).forEach((file) => {
+            const fileItem = document.createElement("div");
+
+            fileItem.classList.add("file-item");
+
+            fileItem.innerHTML = `
+
+          <div class="file-icon">
+
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+              ></path>
+
+              <polyline
+                points="14 2 14 8 20 8"
+              ></polyline>
+
+            </svg>
+
+          </div>
+
+
+          <div class="file-info">
+
+            <span class="file-name">
+              ${file.name}
+            </span>
+
+            <span class="file-size">
+              ${formatFileSize(file.size)}
+            </span>
+
+          </div>
+
+
+          <div class="file-status">
+
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline
+                points="20 6 9 17 4 12"
+              ></polyline>
+            </svg>
+
+          </div>
+
+        `;
+
+            fileList.appendChild(fileItem);
+        });
+    }
+
+    /* =========================
+     FILE SIZE
+  ========================= */
+
+    function formatFileSize(bytes) {
+        if (bytes < 1024) {
+            return bytes + " B";
+        }
+
+        if (bytes < 1024 * 1024) {
+            return (bytes / 1024).toFixed(1) + " KB";
+        }
+
+        return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+    }
+
+    /* =========================
+     DRAG & DROP
+  ========================= */
+
+    uploadArea.addEventListener("dragover", function (event) {
+        event.preventDefault();
+
+        uploadArea.classList.add("dragover");
+    });
+
+    uploadArea.addEventListener("dragleave", function () {
+        uploadArea.classList.remove("dragover");
+    });
+
+    uploadArea.addEventListener("drop", function (event) {
+        event.preventDefault();
+
+        uploadArea.classList.remove("dragover");
+
+        const files = event.dataTransfer.files;
+
+        fileInput.files = files;
+
+        displayFiles(files);
+    });
+
+    /* =========================
+   FORM SUBMIT
+========================= */
+
+   
+    uploadForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        if (fileInput.files.length === 0) {
+            alert("Please select at least one file", "warning");
+            return;
+        }
+
+        const formData = new FormData();
+
+        Array.from(fileInput.files).forEach((file) => {
+            formData.append("file", file);
+        });
+
+        try {
+            const response = await fetch("/api/files/upload", {
+                method: "POST",
+                body: formData
+            });
+
+            const result = await response.text();
+
+            alert("Files uploaded successfully", "success");
+        } catch (error) {
+            console.error("Upload failed:", error);
+            alert("Upload failed", "error");
+        }finally {
+            fileList.innerHTML = "";
+            fileCount.style.display = "none";
+            fileInput.value = "";
+        }
+    });
+</script>
+</body>
+</html>
